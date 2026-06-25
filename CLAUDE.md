@@ -87,3 +87,5 @@ They implement `IPluginItem` from `include/PluginInterface.h`.
 - Do not build individual `.vcxproj` files — always use the `.sln`
 - Do not embed literal non-ASCII characters in UTF-8-without-BOM source files
 - Do not store the PFX in `AppPackages/` (it gets wiped on rebuild) — store in `OpenMonitorPackage/`
+- Do not set `UACExecutionLevel` back to `RequireAdministrator` — Store policy 10.6.3 denies
+  `allowElevation`; the app must run as standard user (`AsInvoker`)

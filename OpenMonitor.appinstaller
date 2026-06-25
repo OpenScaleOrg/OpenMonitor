@@ -21,11 +21,11 @@
 <AppInstaller
   xmlns="http://schemas.microsoft.com/appx/appinstaller/2018"
   Uri="https://openscaleorg.github.io/OpenMonitor/OpenMonitor.appinstaller"
-  Version="1.86.0.0">
+  Version="1.86.1.0">
 
   <MainPackage
     Name="OpenMonitor"
-    Version="1.86.0.0"
+    Version="1.86.1.0"
     Publisher="CN=OpenMonitor"
     ProcessorArchitecture="x64"
     Uri="https://github.com/OpenScaleOrg/OpenMonitor/releases/download/v1.86.0/OpenMonitor_x64.msix" />

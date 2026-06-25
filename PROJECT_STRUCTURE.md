@@ -183,5 +183,5 @@ virtual void DrawItem(CDC* pDC, ...) = 0;   // optional custom drawing
 Name="OpenScale.OpenMonitor"
 Publisher="CN=7F993A72-0639-408E-9DB8-365D59E29D5C"
 PublisherDisplayName="OpenScale"
-Version="1.86.0.0"
+Version="1.86.1.0"
 ```
