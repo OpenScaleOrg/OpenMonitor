@@ -1,0 +1,116 @@
+name: Lint
+
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  clang-format:
+    name: clang-format check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: choco install llvm --version=18.1.8 -y --no-progress
+        shell: pwsh
+
+      - name: Run clang-format
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Recurse -Include *.cpp,*.h `
+            -Exclude *.rc,*.rc2 |
+            Where-Object FullName -NotMatch '(tinyxml2|\\x64\\|\\Release\\|\\Debug\\|AppPackages|\.vs)' |
+            Select-Object -ExpandProperty FullName
+          $failed = @()
+          foreach ($f in $files) {
+            $result = & clang-format --style=file --output-replacements-xml $f
+            if ($result -match '<replacement ') {
+              $failed += $f
+              Write-Warning "Needs formatting: $f"
+            }
+          }
+          if ($failed.Count -gt 0) {
+            Write-Error "$($failed.Count) file(s) need clang-format. Run: clang-format -i <files>"
+            exit 1
+          }
+          Write-Host "All $($files.Count) files pass clang-format."
+
+  clang-tidy:
+    name: clang-tidy
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Install LLVM
+        run: choco install llvm --version=18.1.8 -y --no-progress
+        shell: pwsh
+
+      - name: Generate compile_commands.json
+        shell: pwsh
+        run: |
+          # Use Bear or intercept-build to generate compile_commands.json
+          # For MSVC, we export a simplified version for clang-tidy analysis
+          Write-Host "Generating build for clang-tidy analysis..."
+          msbuild OpenMonitor.sln `
+            /p:Configuration=Release /p:Platform=x64 `
+            /p:platformToolset=v143 `
+            /t:OpenMonitor `
+            /m /v:minimal
+
+      - name: Run clang-tidy on changed files
+        shell: pwsh
+        run: |
+          $base = "${{ github.event.pull_request.base.sha }}"
+          if ($base) {
+            $files = git diff --name-only $base HEAD -- '*.cpp' '*.h' |
+              Where-Object { $_ -notmatch 'tinyxml2' }
+          } else {
+            $files = Get-ChildItem OpenMonitor -Recurse -Include *.cpp |
+              Where-Object FullName -NotMatch tinyxml2 |
+              Select-Object -ExpandProperty FullName
+          }
+          Write-Host "Checking $($files.Count) file(s) with clang-tidy..."
+          $errors = 0
+          foreach ($f in $files) {
+            clang-tidy $f --config-file=.clang-tidy -- `
+              -std=c++20 -DUNICODE -D_UNICODE -DWIN32 -D_WINDOWS `
+              -I"OpenMonitor" -I"include"
+            if ($LASTEXITCODE -ne 0) { $errors++ }
+          }
+          if ($errors -gt 0) { exit 1 }
+
+  markdown-lint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm install -g markdownlint-cli
+      - run: markdownlint --config .markdownlint.json "**/*.md" --ignore node_modules
+
+  yaml-lint:
+    name: YAML lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install yamllint
+      - run: yamllint -d relaxed .
+
+  security-scan:
+    name: Secret scan (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

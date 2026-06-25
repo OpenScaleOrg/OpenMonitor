@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Package.appxmanifest — MSIX identity for OpenMonitor
+  =========================================================
+  Before submitting to the Microsoft Store:
+    1. Change Publisher to your Partner Center publisher value
+       (format: "CN=YourName, O=YourOrg, ..." — must match your code-signing cert)
+    2. Update Version to match the current release (keep .0 as the 4th segment)
+    3. Replace Assets\*.png placeholders with real icons (see Assets\README.txt)
+
+  For sideloading / GitHub Releases:
+    Publisher can be any value that matches your self-signed certificate.
+    Run OpenMonitorPackage\build-and-sign.ps1 to create a matching cert.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  IgnorableNamespaces="uap uap3 rescap desktop">
+
+  <Identity
+    Name="OpenScale.OpenMonitor"
+    Publisher="CN=7F993A72-0639-408E-9DB8-365D59E29D5C"
+    Version="1.86.0.0"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>OpenMonitor</DisplayName>
+    <PublisherDisplayName>OpenScale</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+
+  <Applications>
+    <Application
+      Id="OpenMonitor"
+      Executable="OpenMonitor.exe"
+      EntryPoint="Windows.FullTrustApplication">
+
+      <uap:VisualElements
+        DisplayName="OpenMonitor"
+        Description="Real-time network speed, CPU and memory monitor for the Windows taskbar"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Assets\Wide310x150Logo.png"
+          ShortName="OpenMonitor">
+          <uap:ShowNameOnTiles>
+            <uap:ShowOn Tile="square150x150Logo" />
+            <uap:ShowOn Tile="wide310x150Logo" />
+          </uap:ShowNameOnTiles>
+        </uap:DefaultTile>
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+
+      <Extensions>
+        <!-- Register as auto-start on login (respects the app's own run-on-startup setting) -->
+        <desktop:Extension Category="windows.startupTask" Executable="OpenMonitor\OpenMonitor.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="OpenMonitorStartup" Enabled="false" DisplayName="OpenMonitor" />
+        </desktop:Extension>
+      </Extensions>
+
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <!-- Required to run a Win32/MFC app as a full-trust packaged app -->
+    <rescap:Capability Name="runFullTrust" />
+    <!-- Required because OpenMonitor.exe embeds requireAdministrator in its manifest -->
+    <rescap:Capability Name="allowElevation" />
+  </Capabilities>
+
+</Package>

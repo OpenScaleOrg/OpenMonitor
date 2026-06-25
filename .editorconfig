@@ -1,0 +1,67 @@
+# OpenMonitor — EditorConfig
+# https://editorconfig.org
+
+root = true
+
+# ── Default: all files ────────────────────────────────────────────────────────
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# ── C++ source ────────────────────────────────────────────────────────────────
+[*.{cpp,h,hpp,inl}]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+
+# ── Resource files (UTF-16 LE — do not let editors convert encoding) ──────────
+[*.{rc,rc2}]
+charset = utf-16-le
+end_of_line = crlf
+indent_style = space
+indent_size = 4
+
+# ── XML / appxmanifest ────────────────────────────────────────────────────────
+[*.{xml,appxmanifest,wapproj,props,targets}]
+indent_style = space
+indent_size = 2
+
+# ── MSBuild project files ─────────────────────────────────────────────────────
+[*.{vcxproj,sln}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = false
+
+# ── JSON ──────────────────────────────────────────────────────────────────────
+[*.json]
+indent_style = space
+indent_size = 2
+
+# ── YAML ─────────────────────────────────────────────────────────────────────
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# ── Markdown ──────────────────────────────────────────────────────────────────
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# ── INI / language files ──────────────────────────────────────────────────────
+[*.ini]
+charset = utf-8-bom
+indent_style = space
+indent_size = 0
+
+# ── PowerShell ────────────────────────────────────────────────────────────────
+[*.{ps1,psm1,psd1}]
+indent_style = space
+indent_size = 4
+
+# ── Batch ────────────────────────────────────────────────────────────────────
+[*.{bat,cmd}]
+end_of_line = crlf
+indent_style = space
+indent_size = 4

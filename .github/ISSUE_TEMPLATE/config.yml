@@ -1,0 +1,15 @@
+# Issue template chooser configuration
+blank_issues_enabled: false
+
+contact_links:
+  - name: 💬 Ask a question
+    url: https://github.com/OpenScaleOrg/OpenMonitor/discussions
+    about: Use Discussions for how-to questions, skin help, and general feedback
+
+  - name: 📖 Read the FAQ
+    url: https://github.com/OpenScaleOrg/OpenMonitor/blob/master/Help.md
+    about: Common problems and solutions
+
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/OpenScaleOrg/OpenMonitor/security/advisories/new
+    about: Please report privately via GitHub — do not open a public issue

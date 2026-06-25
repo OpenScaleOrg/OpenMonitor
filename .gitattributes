@@ -1,0 +1,60 @@
+# OpenMonitor — Git attributes
+# Ensures consistent line endings across platforms
+
+# ── Default: auto-normalize to CRLF on Windows ───────────────────────────────
+*               text=auto eol=crlf
+
+# ── C++ source ────────────────────────────────────────────────────────────────
+*.cpp           text eol=crlf
+*.h             text eol=crlf
+*.hpp           text eol=crlf
+*.inl           text eol=crlf
+
+# ── Resource files — MUST stay UTF-16 LE; mark binary to prevent corruption ───
+*.rc            text eol=crlf working-tree-encoding=UTF-16
+*.rc2           text eol=crlf working-tree-encoding=UTF-16
+
+# ── Build / project files ─────────────────────────────────────────────────────
+*.sln           text eol=crlf
+*.vcxproj       text eol=crlf
+*.vcxproj.filters text eol=crlf
+*.props         text eol=crlf
+*.targets       text eol=crlf
+*.wapproj       text eol=crlf
+
+# ── Config / data ─────────────────────────────────────────────────────────────
+*.xml           text eol=crlf
+*.appxmanifest  text eol=crlf
+*.appinstaller  text eol=crlf
+*.ini           text eol=crlf
+*.json          text eol=crlf
+*.yaml          text eol=crlf
+*.yml           text eol=crlf
+
+# ── Scripts ───────────────────────────────────────────────────────────────────
+*.ps1           text eol=crlf
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+*.sh            text eol=lf
+
+# ── Docs ──────────────────────────────────────────────────────────────────────
+*.md            text eol=crlf
+*.txt           text eol=crlf
+
+# ── Binaries — never diff or merge ───────────────────────────────────────────
+*.exe           binary
+*.dll           binary
+*.lib           binary
+*.pdb           binary
+*.obj           binary
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.ico           binary
+*.bmp           binary
+*.gif           binary
+*.zip           binary
+*.msix          binary
+*.msixupload    binary
+*.pfx           binary
+*.cer           binary

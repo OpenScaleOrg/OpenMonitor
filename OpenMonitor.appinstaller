@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  OpenMonitor.appinstaller
+  ============================
+  Host this file at a stable public URL (e.g. GitHub Pages or a CDN).
+  Update Uri, Version, and MainPackage/@Uri on every release.
+
+  IMPORTANT: The Uri in <AppInstaller Uri="..."> must be the URL where
+  THIS FILE is hosted — Windows uses it as the update-check endpoint.
+
+  How auto-update works:
+    1. User double-clicks the .msix to install the first time.
+    2. On each subsequent app launch, Windows silently checks the
+       HoursBetweenUpdateChecks interval and downloads a new .msix if
+       the hosted version is newer.
+    3. The update is applied the next time the user restarts the app.
+
+  Replace all PLACEHOLDER values before publishing:
+    VERSION               — e.g. 1.87.0.0
+-->
+<AppInstaller
+  xmlns="http://schemas.microsoft.com/appx/appinstaller/2018"
+  Uri="https://openscaleorg.github.io/OpenMonitor/OpenMonitor.appinstaller"
+  Version="1.86.0.0">
+
+  <MainPackage
+    Name="OpenMonitor"
+    Version="1.86.0.0"
+    Publisher="CN=OpenMonitor"
+    ProcessorArchitecture="x64"
+    Uri="https://github.com/OpenScaleOrg/OpenMonitor/releases/download/v1.86.0/OpenMonitor_x64.msix" />
+
+  <UpdateSettings>
+    <!-- Check for updates on every launch but don't block the app startup -->
+    <OnLaunch HoursBetweenUpdateChecks="0" ShowPrompt="false" UpdateBlocksActivation="false" />
+    <AutomaticBackgroundTask />
+    <ForceUpdateFromAnyVersion>true</ForceUpdateFromAnyVersion>
+  </UpdateSettings>
+
+</AppInstaller>

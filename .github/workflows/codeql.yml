@@ -1,0 +1,58 @@
+name: CodeQL Security Analysis
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  schedule:
+    - cron: '30 2 * * 1'   # Weekly on Monday at 02:30 UTC
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [c-cpp]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+          config: |
+            paths:
+              - OpenMonitor
+              - OpenHardwareMonitorApi
+            paths-ignore:
+              - OpenMonitor/tinyxml2
+              - '**/*.rc'
+              - '**/*.rc2'
+
+      - name: Build for analysis
+        run: |
+          msbuild OpenMonitor.sln `
+            /p:Configuration=Release /p:Platform=x64 `
+            /p:platformToolset=v143 `
+            /t:OpenMonitor,OpenHardwareMonitorApi `
+            /m /v:minimal
+        shell: pwsh
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
+          upload: true

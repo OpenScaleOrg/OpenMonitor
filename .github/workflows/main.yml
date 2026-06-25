@@ -1,0 +1,238 @@
+name: Release CI
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+# ── Shared env ────────────────────────────────────────────────────────────────
+env:
+  SOLUTION_LITE: OpenMonitor_Lite.sln
+  SOLUTION_FULL: OpenMonitor.sln
+  WAP_PROJECT:   OpenMonitorPackage\OpenMonitorPackage.wapproj
+  MSIX_NAME:     OpenMonitor
+
+jobs:
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Native EXE builds (ZIP artifacts — unchanged from original CI)
+# ──────────────────────────────────────────────────────────────────────────────
+
+  x64_build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build x64
+        run: msbuild ${{ env.SOLUTION_LITE }} -p:configuration="Release (lite)" -p:platform=x64 -p:platformToolset=v143
+
+      - name: Upload x64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: x64_OpenMonitor
+          path: |
+            Bin/x64/Release (lite)/OpenMonitor.exe
+            Bin/x64/Release (lite)/*.dll
+
+      - name: Upload x64 PDB
+        uses: actions/upload-artifact@v4
+        with:
+          name: x64_pdb
+          path: Bin/x64/Release (lite)/*.pdb
+
+  x86_build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build x86
+        run: msbuild ${{ env.SOLUTION_LITE }} -p:configuration="Release (lite)" -p:platform=x86 -p:platformToolset=v143
+
+      - name: Upload x86 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: x86_OpenMonitor
+          path: |
+            Bin/Release (lite)/OpenMonitor.exe
+            Bin/Release (lite)/*.dll
+
+  arm64ec_build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build ARM64EC
+        run: msbuild ${{ env.SOLUTION_LITE }} -p:configuration="Release (lite)" -p:platform=ARM64EC -p:platformToolset=v143
+
+      - name: Upload ARM64EC artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: arm64EC_OpenMonitor
+          path: |
+            Bin/ARM64EC/Release (lite)/OpenMonitor.exe
+            Bin/ARM64EC/Release (lite)/*.dll
+
+# ──────────────────────────────────────────────────────────────────────────────
+# MSIX build — x64 (self-signed, suitable for sideloading)
+# To submit to the Microsoft Store, replace the self-signed step with
+# a trusted cert stored in GitHub Secrets.
+# ──────────────────────────────────────────────────────────────────────────────
+
+  msix_x64:
+    runs-on: windows-latest
+    needs: x64_build    # reuse the already-compiled EXE
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      # Download the EXE artifact so we don't recompile
+      - name: Download x64 EXE artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: x64_OpenMonitor
+          path: Bin/x64/Release (lite)/
+
+      # Create a self-signed certificate for sideloading
+      # Replace this block with a real cert from GitHub Secrets for Store submission
+      - name: Create self-signed certificate
+        shell: pwsh
+        run: |
+          $cert = New-SelfSignedCertificate `
+            -Type CodeSigning `
+            -Subject "CN=OpenMonitor" `
+            -KeyUsage DigitalSignature `
+            -FriendlyName "OpenMonitor CI" `
+            -CertStoreLocation Cert:\CurrentUser\My `
+            -NotAfter (Get-Date).AddYears(3)
+
+          $pfxPath = "${{ github.workspace }}\OpenMonitorPackage\OpenMonitor_SelfSigned.pfx"
+          $securePwd = ConvertTo-SecureString -String "" -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $securePwd | Out-Null
+
+          # Trust the cert so MSBuild validation passes
+          $store = [System.Security.Cryptography.X509Certificates.X509Store]::new("TrustedPeople","CurrentUser")
+          $store.Open("ReadWrite"); $store.Add($cert); $store.Close()
+          $store2 = [System.Security.Cryptography.X509Certificates.X509Store]::new("Root","CurrentUser")
+          $store2.Open("ReadWrite"); $store2.Add($cert); $store2.Close()
+
+          Write-Host "Certificate created: $($cert.Thumbprint)"
+          echo "CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+
+      - name: Build MSIX (x64)
+        shell: pwsh
+        run: |
+          $pfxPath = "${{ github.workspace }}\OpenMonitorPackage\OpenMonitor_SelfSigned.pfx"
+          & msbuild ${{ env.WAP_PROJECT }} `
+            /p:Configuration=Release `
+            /p:Platform=x64 `
+            /p:PackageCertificateKeyFile=$pfxPath `
+            /p:PackageCertificatePassword="" `
+            /p:AppxPackageSigningEnabled=true `
+            /p:UapAppxPackageBuildMode=SideloadOnly `
+            /m /v:m
+
+      - name: Collect MSIX output
+        shell: pwsh
+        run: |
+          $msix = Get-ChildItem AppPackages -Recurse -Filter "*.msix" |
+                  Sort-Object LastWriteTime -Descending |
+                  Select-Object -First 1
+          if ($msix) {
+            $dest = "msix_output\${{ env.MSIX_NAME }}_x64.msix"
+            New-Item -ItemType Directory -Force msix_output | Out-Null
+            Copy-Item $msix.FullName $dest
+            Write-Host "MSIX: $dest"
+          } else {
+            Write-Error "MSIX not found in AppPackages"
+          }
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: msix_x64_OpenMonitor
+          path: msix_output/
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Release — zip artifacts + MSIX + .appinstaller into a GitHub Release
+# Runs only on version tags (v*).
+# ──────────────────────────────────────────────────────────────────────────────
+
+  create_release:
+    runs-on: windows-latest
+    needs: [x64_build, x86_build, arm64ec_build, msix_x64]
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Download all build artifacts
+      - uses: actions/download-artifact@v4
+        with: { name: x64_OpenMonitor,        path: release_assets/x64/ }
+      - uses: actions/download-artifact@v4
+        with: { name: x86_OpenMonitor,         path: release_assets/x86/ }
+      - uses: actions/download-artifact@v4
+        with: { name: arm64EC_OpenMonitor,      path: release_assets/arm64ec/ }
+      - uses: actions/download-artifact@v4
+        with: { name: msix_x64_OpenMonitor,     path: release_assets/msix/ }
+
+      # Package ZIPs
+      - name: Package ZIP archives
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"   # e.g. v1.87
+          Compress-Archive release_assets/x64/*      -DestinationPath "release_assets/OpenMonitor_${tag}_x64.zip"    -Force
+          Compress-Archive release_assets/x86/*      -DestinationPath "release_assets/OpenMonitor_${tag}_x86.zip"    -Force
+          Compress-Archive release_assets/arm64ec/*  -DestinationPath "release_assets/OpenMonitor_${tag}_arm64ec.zip" -Force
+
+      # Update the .appinstaller with the real tag/URLs before publishing
+      - name: Stamp .appinstaller with release version
+        shell: pwsh
+        run: |
+          $tag     = "${{ github.ref_name }}"            # v1.87
+          $ver     = $tag.TrimStart('v') + ".0.0"        # 1.87.0.0
+          $repo    = "${{ github.repository }}"           # owner/repo
+          $aiUrl   = "https://github.com/$repo/releases/download/$tag/OpenMonitor.appinstaller"
+          $msixUrl = "https://github.com/$repo/releases/download/$tag/OpenMonitor_x64.msix"
+
+          [xml]$ai = Get-Content OpenMonitor.appinstaller
+          $ai.AppInstaller.Uri                      = $aiUrl
+          $ai.AppInstaller.Version                  = $ver
+          $ai.AppInstaller.MainPackage.Version      = $ver
+          $ai.AppInstaller.MainPackage.Uri          = $msixUrl
+          $ai.Save("release_assets/OpenMonitor.appinstaller")
+          Write-Host "AppInstaller URI: $aiUrl"
+          Write-Host "MSIX URI:         $msixUrl"
+
+      # Copy MSIX with clean name
+      - name: Rename MSIX for release
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          Copy-Item release_assets/msix/OpenMonitor_x64.msix `
+                    "release_assets/OpenMonitor_${tag}_x64.msix"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name:     "OpenMonitor ${{ github.ref_name }}"
+          draft:    false
+          prerelease: false
+          files: |
+            release_assets/OpenMonitor_${{ github.ref_name }}_x64.zip
+            release_assets/OpenMonitor_${{ github.ref_name }}_x86.zip
+            release_assets/OpenMonitor_${{ github.ref_name }}_arm64ec.zip
+            release_assets/OpenMonitor_${{ github.ref_name }}_x64.msix
+            release_assets/OpenMonitor.appinstaller

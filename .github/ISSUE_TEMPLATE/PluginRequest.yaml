@@ -1,0 +1,45 @@
+name: "🔌 Plugin Idea"
+description: Suggest a new built-in display item or plugin API capability
+labels: ["plugin", "enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        OpenMonitor supports a plugin system. Before requesting a built-in item,
+        consider whether a plugin DLL could achieve the same goal — plugins ship
+        independently and don't require a core release.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What would this display or monitor?
+      description: Describe the metric, data source, or capability you want
+      placeholder: e.g. "Show current active Ethernet adapter name" or "Display GPU VRAM usage"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type of request
+      options:
+        - New built-in display item (core change)
+        - New plugin API capability (lets third-party plugins do more)
+        - Improvement to existing item
+    validations:
+      required: true
+
+  - type: input
+    id: data-source
+    attributes:
+      label: Data source
+      description: Where does this data come from? (Windows API, WMI, PDH, registry, etc.)
+      placeholder: e.g. "PDH counter \\Network Interface(*)\\Current Bandwidth"
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Could a plugin DLL already do this? Have you looked at the plugin SDK?

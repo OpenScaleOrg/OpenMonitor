@@ -1,0 +1,24 @@
+# CODEOWNERS — reviewers auto-assigned to PRs by path
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default: all files
+*                                         @OpenScaleOrg
+
+# Core application logic
+/OpenMonitor/                             @OpenScaleOrg
+/OpenHardwareMonitorApi/                  @OpenScaleOrg
+
+# MSIX packaging and manifest
+/OpenMonitorPackage/                      @OpenScaleOrg
+
+# CI/CD workflows
+/.github/workflows/                       @OpenScaleOrg
+
+# Security policy — always requires maintainer review
+/SECURITY.md                              @OpenScaleOrg
+
+# Plugin public interface — breaking changes need careful review
+/include/PluginInterface.h                @OpenScaleOrg
+
+# Language files — any contributor can add translations
+/OpenMonitor/language/                    @OpenScaleOrg

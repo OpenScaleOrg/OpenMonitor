@@ -1,0 +1,699 @@
+<title>OpenMonitor — System Monitor for Windows</title>
+<meta name="description" content="Real-time network speed, CPU, RAM, GPU and temperature monitor that lives in your Windows taskbar. Free, open-source, no telemetry.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:title" content="OpenMonitor — System Monitor for Windows">
+<meta property="og:description" content="Your PC, at a glance.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --ground:      #0F0F0F;
+  --surface:     #161616;
+  --surface-2:   #1E1E1E;
+  --border:      #272727;
+  --text:        #EAE4DA;
+  --muted:       #6B6560;
+  --accent:      #FF6B2B;
+  --accent-dim:  rgba(255,107,43,0.10);
+  --accent-glow: rgba(255,107,43,0.22);
+  --amber:       #FFB347;
+
+  --display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --mono:    'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+  --body:    'Inter', 'Segoe UI', system-ui, sans-serif;
+
+  --max: 1120px;
+  --r:   10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── NAV ─────────────────────────────────────────────────── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem;
+  background: rgba(15,15,15,0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid transparent;
+  transition: border-color .3s;
+}
+nav.scrolled { border-bottom-color: var(--border); }
+
+.logo {
+  display: flex; align-items: center; gap: .5rem;
+  font-family: var(--display); font-weight: 600; font-size: 1rem;
+  color: var(--text); text-decoration: none; letter-spacing: -.01em;
+}
+.logo-pip {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  animation: blink 2.4s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.nav-r { display: flex; align-items: center; gap: 1.75rem; list-style: none; }
+.nav-r a { color: var(--muted); text-decoration: none; font-size: .875rem; transition: color .2s; }
+.nav-r a:hover { color: var(--text); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .5rem 1.25rem; border-radius: 6px; border: none; cursor: pointer;
+  font-family: var(--display); font-weight: 500; font-size: .875rem;
+  text-decoration: none; transition: all .2s;
+}
+.btn-p { background: var(--accent); color: #fff; }
+.btn-p:hover { background: #ff7c42; transform: translateY(-1px); box-shadow: 0 4px 18px var(--accent-glow); }
+.btn-g { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-g:hover { border-color: var(--muted); background: var(--surface); }
+
+/* ── HERO ─────────────────────────────────────────────────── */
+.hero {
+  min-height: 100svh;
+  padding: 110px 2rem 80px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; width: 700px; height: 700px;
+  top: 0; right: -15%;
+  background: radial-gradient(circle, rgba(255,107,43,.07) 0%, transparent 65%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; width: 400px; height: 400px;
+  bottom: 5%; left: -10%;
+  background: radial-gradient(circle, rgba(255,179,71,.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-inner {
+  max-width: var(--max); width: 100%;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 5rem; align-items: center;
+}
+
+.eyebrow {
+  font-family: var(--mono); font-size: .6875rem;
+  letter-spacing: .13em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 1.5rem;
+}
+
+h1 {
+  font-family: var(--display);
+  font-size: clamp(2.75rem, 5vw, 4.75rem);
+  font-weight: 700; letter-spacing: -.045em; line-height: 1.0;
+  margin-bottom: 1.5rem;
+}
+h1 em { font-style: normal; color: var(--accent); }
+
+.hero-sub {
+  font-size: 1.0625rem; font-weight: 300; color: var(--muted);
+  max-width: 420px; line-height: 1.72; margin-bottom: 2.5rem;
+}
+
+.ctas { display: flex; gap: .875rem; flex-wrap: wrap; }
+.ctas .btn-p { padding: .75rem 1.75rem; font-size: .9375rem; }
+.ctas .btn-g { padding: .75rem 1.5rem;  font-size: .9375rem; }
+
+.hero-note {
+  margin-top: 1.25rem;
+  font-family: var(--mono); font-size: .6875rem; color: var(--muted);
+  letter-spacing: .03em;
+}
+
+/* ── WIDGET ──────────────────────────────────────────────── */
+.widget { display: flex; flex-direction: column; gap: 1rem; }
+
+.win-float {
+  background: rgba(18,18,18,.97);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.25rem 1.375rem;
+  position: relative; overflow: hidden;
+  box-shadow: 0 32px 64px rgba(0,0,0,.55),
+              inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+/* Scanline overlay — the instrument-panel aesthetic risk */
+.win-float::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: var(--r);
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px, transparent 3px,
+    rgba(255,107,43,.018) 3px, rgba(255,107,43,.018) 4px
+  );
+  pointer-events: none; z-index: 1;
+}
+
+.titlebar {
+  display: flex; align-items: center; gap: .35rem;
+  margin-bottom: 1.125rem; position: relative; z-index: 2;
+}
+.td { width: 10px; height: 10px; border-radius: 50%; }
+.td.c { background: #FF5F57; }
+.td.m { background: #FEBC2E; }
+.td.x { background: #28C840; }
+.twin { font-family: var(--mono); font-size: .5625rem; color: var(--muted); margin-left: .5rem; letter-spacing: .06em; text-transform: uppercase; }
+
+.srow {
+  display: grid;
+  grid-template-columns: 1.1rem 1fr auto;
+  gap: .375rem .625rem;
+  align-items: center;
+  padding: .3rem 0;
+  border-top: 1px solid rgba(255,255,255,.03);
+  position: relative; z-index: 2;
+}
+.srow:first-of-type { border-top: none; }
+
+.sicon {
+  font-family: var(--mono); font-size: .75rem;
+  color: var(--accent); font-weight: 700; line-height: 1;
+}
+.slabel {
+  font-family: var(--mono); font-size: .625rem;
+  color: var(--muted); letter-spacing: .06em; text-transform: uppercase;
+}
+.sval {
+  font-family: var(--mono); font-size: .875rem;
+  font-weight: 500; color: var(--text); text-align: right; min-width: 90px;
+}
+.bwrap {
+  grid-column: 2 / 4; height: 2px;
+  background: rgba(255,255,255,.06); border-radius: 1px;
+  overflow: hidden; margin: -2px 0 2px;
+}
+.bfill {
+  height: 100%; width: 0; border-radius: 1px;
+  background: linear-gradient(90deg, var(--accent), var(--amber));
+  transition: width .9s cubic-bezier(.4,0,.2,1);
+}
+
+/* Taskbar strip */
+.taskbar-strip {
+  background: rgba(18,18,18,.97);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: .5rem 1.125rem;
+  display: flex; align-items: center; gap: 1.375rem;
+  font-family: var(--mono); font-size: .75rem; color: var(--text);
+}
+.ts-item { display: flex; align-items: center; gap: .35rem; }
+.ts-arrow { color: var(--accent); font-size: .625rem; font-weight: 700; }
+.ts-sep { color: var(--border); }
+
+/* ── FEATURES ────────────────────────────────────────────── */
+.features {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 5rem 2rem;
+}
+
+.feat-header { max-width: var(--max); margin: 0 auto 3.5rem; }
+
+.sec-head {
+  font-family: var(--display);
+  font-size: clamp(1.625rem, 2.8vw, 2.375rem);
+  font-weight: 600; letter-spacing: -.035em; line-height: 1.15;
+  margin-bottom: .875rem;
+}
+.sec-sub { color: var(--muted); font-weight: 300; max-width: 480px; line-height: 1.7; }
+
+.feat-grid {
+  max-width: var(--max); margin: 0 auto;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+}
+.fcard {
+  padding: 2.25rem; border-right: 1px solid var(--border);
+  transition: background .2s;
+}
+.fcard:last-child { border-right: none; }
+.fcard:nth-child(n+4) { border-top: 1px solid var(--border); }
+.fcard:hover { background: var(--surface-2); }
+
+.ficon {
+  width: 38px; height: 38px; border-radius: 8px;
+  background: var(--accent-dim); border: 1px solid rgba(255,107,43,.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; margin-bottom: 1.125rem;
+}
+.ftitle {
+  font-family: var(--display); font-size: .9375rem;
+  font-weight: 600; letter-spacing: -.01em; margin-bottom: .4rem;
+}
+.fdesc { font-size: .8125rem; color: var(--muted); line-height: 1.65; font-weight: 300; }
+
+/* ── STATS BAND ──────────────────────────────────────────── */
+.stats-band { padding: 5rem 2rem; }
+.stats-inner {
+  max-width: var(--max); margin: 0 auto;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+}
+.stat-card {
+  padding: 2rem 1.75rem;
+  border: 1px solid var(--border); border-radius: var(--r);
+  position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+.stat-num {
+  font-family: var(--display); font-size: 2.5rem;
+  font-weight: 700; letter-spacing: -.045em; line-height: 1;
+  margin-bottom: .5rem; color: var(--text);
+}
+.stat-num em { font-style: normal; color: var(--accent); }
+.stat-lbl {
+  font-family: var(--mono); font-size: .625rem;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ── DOWNLOAD ────────────────────────────────────────────── */
+.download {
+  border-top: 1px solid var(--border);
+  padding: 5rem 2rem;
+}
+.dl-inner { max-width: var(--max); margin: 0 auto; }
+
+.dl-main {
+  display: flex; gap: 3rem; align-items: flex-start;
+  margin: 3rem 0 2rem;
+}
+
+.dl-hero {
+  display: flex; flex-direction: column; gap: .3rem;
+  background: var(--accent); color: #fff;
+  padding: 1.375rem 2rem; border-radius: var(--r);
+  text-decoration: none; min-width: 250px;
+  transition: all .2s;
+  box-shadow: 0 0 0 0 var(--accent-glow);
+}
+.dl-hero:hover {
+  background: #ff7c42; transform: translateY(-2px);
+  box-shadow: 0 10px 36px var(--accent-glow);
+}
+.dl-tag {
+  font-family: var(--mono); font-size: .625rem;
+  letter-spacing: .1em; text-transform: uppercase; opacity: .75;
+}
+.dl-name {
+  font-family: var(--display); font-size: 1.125rem;
+  font-weight: 600; letter-spacing: -.01em;
+}
+.dl-meta { font-family: var(--mono); font-size: .6875rem; opacity: .65; }
+
+.dl-alts {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: .625rem; flex: 1;
+}
+.dl-alt {
+  display: flex; flex-direction: column; gap: .2rem;
+  padding: 1rem 1.125rem; border: 1px solid var(--border);
+  border-radius: 8px; text-decoration: none; color: var(--text);
+  background: var(--surface); transition: all .2s;
+}
+.dl-alt:hover { border-color: var(--muted); background: var(--surface-2); }
+.dl-alt-tag {
+  font-family: var(--mono); font-size: .5625rem;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+}
+.dl-alt-name {
+  font-family: var(--display); font-size: .9375rem;
+  font-weight: 500; letter-spacing: -.01em;
+}
+
+.dl-foot {
+  font-size: .8125rem; color: var(--muted); line-height: 1.65;
+  font-weight: 300; border-top: 1px solid var(--border); padding-top: 1.5rem;
+}
+.dl-foot a { color: var(--accent); text-decoration: none; }
+.dl-foot a:hover { text-decoration: underline; }
+
+.reqs { display: flex; flex-wrap: wrap; gap: .875rem 2rem; margin-top: 1.5rem; }
+.req {
+  display: flex; align-items: center; gap: .5rem;
+  font-family: var(--mono); font-size: .6875rem; color: var(--muted);
+}
+.req-pip { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+footer {
+  padding: 2.5rem 2rem;
+  border-top: 1px solid var(--border);
+}
+.foot-inner {
+  max-width: var(--max); margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 1.25rem;
+}
+.foot-brand { font-family: var(--display); font-weight: 600; font-size: .9375rem; }
+.foot-copy { font-size: .75rem; color: var(--muted); font-weight: 300; margin-top: .2rem; }
+.foot-links { display: flex; gap: 1.5rem; list-style: none; }
+.foot-links a { font-size: .8125rem; color: var(--muted); text-decoration: none; transition: color .2s; }
+.foot-links a:hover { color: var(--text); }
+
+/* ── ANIMATIONS ──────────────────────────────────────────── */
+.fade-up { opacity: 0; transform: translateY(20px); transition: opacity .55s ease, transform .55s ease; }
+.fade-up.in { opacity: 1; transform: none; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 880px) {
+  .hero-inner { grid-template-columns: 1fr; gap: 3rem; }
+  .feat-grid { grid-template-columns: 1fr; }
+  .fcard { border-right: none; border-bottom: 1px solid var(--border); }
+  .fcard:last-child { border-bottom: none; }
+  .fcard:nth-child(n+4) { border-top: none; }
+  .stats-inner { grid-template-columns: 1fr; gap: 1rem; }
+  .dl-main { flex-direction: column; }
+  .dl-hero { min-width: unset; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+}
+</style>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="logo">
+    <span class="logo-pip"></span>
+    OpenMonitor
+  </a>
+  <ul class="nav-r">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#download">Download</a></li>
+    <li><a href="https://github.com/OpenScaleOrg/OpenMonitor" target="_blank" rel="noopener">GitHub ↗</a></li>
+    <li><a href="#download" class="btn btn-p">Download</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+
+    <div>
+      <p class="eyebrow">Free &amp; Open Source · Windows</p>
+      <h1>Your PC,<br><em>at a glance.</em></h1>
+      <p class="hero-sub">
+        Real-time network speed, CPU, RAM, GPU, and temperature monitoring
+        that lives in your taskbar — always visible, never in the way.
+      </p>
+      <div class="ctas">
+        <a href="#download" class="btn btn-p">↓ Download for Windows</a>
+        <a href="https://github.com/OpenScaleOrg/OpenMonitor" target="_blank" rel="noopener" class="btn btn-g">View on GitHub</a>
+      </div>
+      <p class="hero-note">Windows 10 1809+ &nbsp;·&nbsp; Free &nbsp;·&nbsp; No telemetry &nbsp;·&nbsp; MIT License</p>
+    </div>
+
+    <div class="widget">
+      <!-- Floating window mockup -->
+      <div class="win-float">
+        <div class="titlebar">
+          <div class="td c"></div>
+          <div class="td m"></div>
+          <div class="td x"></div>
+          <span class="twin">OpenMonitor</span>
+        </div>
+        <div class="srow">
+          <span class="sicon">↑</span>
+          <span class="slabel">Upload</span>
+          <span class="sval" id="v-up">0.0 MB/s</span>
+          <div class="bwrap"><div class="bfill" id="b-up"></div></div>
+        </div>
+        <div class="srow">
+          <span class="sicon">↓</span>
+          <span class="slabel">Download</span>
+          <span class="sval" id="v-dn">0.0 MB/s</span>
+          <div class="bwrap"><div class="bfill" id="b-dn"></div></div>
+        </div>
+        <div class="srow">
+          <span class="sicon">■</span>
+          <span class="slabel">CPU</span>
+          <span class="sval" id="v-cpu">0%</span>
+          <div class="bwrap"><div class="bfill" id="b-cpu"></div></div>
+        </div>
+        <div class="srow">
+          <span class="sicon">■</span>
+          <span class="slabel">RAM</span>
+          <span class="sval" id="v-ram">0.0 GB</span>
+          <div class="bwrap"><div class="bfill" id="b-ram"></div></div>
+        </div>
+        <div class="srow">
+          <span class="sicon">■</span>
+          <span class="slabel">GPU</span>
+          <span class="sval" id="v-gpu">0%</span>
+          <div class="bwrap"><div class="bfill" id="b-gpu"></div></div>
+        </div>
+        <div class="srow">
+          <span class="sicon">◌</span>
+          <span class="slabel">CPU Temp</span>
+          <span class="sval" id="v-tmp">0 °C</span>
+          <div class="bwrap"><div class="bfill" id="b-tmp"></div></div>
+        </div>
+      </div>
+
+      <!-- Taskbar strip -->
+      <div class="taskbar-strip">
+        <div class="ts-item"><span class="ts-arrow">↑</span><span id="t-up">—</span></div>
+        <span class="ts-sep">|</span>
+        <div class="ts-item"><span class="ts-arrow">↓</span><span id="t-dn">—</span></div>
+        <span class="ts-sep">|</span>
+        <div class="ts-item">CPU&nbsp;<span id="t-cpu">—</span></div>
+        <span class="ts-sep">|</span>
+        <div class="ts-item">RAM&nbsp;<span id="t-ram">—</span></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="feat-header">
+    <p class="eyebrow">What it monitors</p>
+    <h2 class="sec-head">Everything. At once.<br>Nothing you don't need.</h2>
+    <p class="sec-sub">Six metrics, one glance. No dashboards. No bloat. No subscriptions.</p>
+  </div>
+  <div class="feat-grid">
+    <div class="fcard fade-up">
+      <div class="ficon">⚡</div>
+      <p class="ftitle">Taskbar Integration</p>
+      <p class="fdesc">Embeds directly into the Windows taskbar. Stats stay visible regardless of which app has focus — no alt-tab, no overlay.</p>
+    </div>
+    <div class="fcard fade-up">
+      <div class="ficon">🌐</div>
+      <p class="ftitle">Network Speed</p>
+      <p class="fdesc">Live upload and download in bytes or bits per second. Auto-selects the active adapter, or pin to one manually.</p>
+    </div>
+    <div class="fcard fade-up">
+      <div class="ficon">🔥</div>
+      <p class="ftitle">Hardware Temperatures</p>
+      <p class="fdesc">CPU, GPU, and motherboard temperatures via LibreHardwareMonitor. Know when your machine is running hot before it throttles.</p>
+    </div>
+    <div class="fcard fade-up">
+      <div class="ficon">🎨</div>
+      <p class="ftitle">Custom Skins</p>
+      <p class="fdesc">Pick from built-in themes or author your own with a plain XML file. Colors, fonts, layout, item order — all yours.</p>
+    </div>
+    <div class="fcard fade-up">
+      <div class="ficon">📊</div>
+      <p class="ftitle">Traffic History</p>
+      <p class="fdesc">Logs daily, weekly, and monthly network usage locally on your machine. No account, no cloud, no expiry.</p>
+    </div>
+    <div class="fcard fade-up">
+      <div class="ficon">🔌</div>
+      <p class="ftitle">Plugin System</p>
+      <p class="fdesc">Extend the display with custom DLL plugins. Drop one into the plugins folder and it loads on next start. SDK included.</p>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAND -->
+<section class="stats-band">
+  <div class="stats-inner">
+    <div class="stat-card fade-up">
+      <div class="stat-num"><em>0</em> bytes</div>
+      <div class="stat-lbl">of your data ever leaves your machine</div>
+    </div>
+    <div class="stat-card fade-up">
+      <div class="stat-num">13<em>+</em></div>
+      <div class="stat-lbl">languages supported out of the box</div>
+    </div>
+    <div class="stat-card fade-up">
+      <div class="stat-num">&lt;<em>1</em>%</div>
+      <div class="stat-lbl">CPU overhead in normal operation</div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD -->
+<section class="download" id="download">
+  <div class="dl-inner">
+    <p class="eyebrow">Download</p>
+    <h2 class="sec-head">Ready to install.</h2>
+    <p class="sec-sub" style="margin-bottom:0">The MSIX installer is recommended — it handles updates and integrates cleanly with Windows. All builds are portable and require no account.</p>
+
+    <div class="dl-main">
+      <a href="https://github.com/OpenScaleOrg/OpenMonitor/releases/latest" class="dl-hero" target="_blank" rel="noopener">
+        <span class="dl-tag">Recommended</span>
+        <span class="dl-name">Windows Installer · x64</span>
+        <span class="dl-meta">MSIX · Windows 10 1809+</span>
+      </a>
+      <div class="dl-alts">
+        <a href="https://github.com/OpenScaleOrg/OpenMonitor/releases/latest" class="dl-alt" target="_blank" rel="noopener">
+          <span class="dl-alt-tag">Portable · x64</span>
+          <span class="dl-alt-name">Windows 64-bit ZIP</span>
+        </a>
+        <a href="https://github.com/OpenScaleOrg/OpenMonitor/releases/latest" class="dl-alt" target="_blank" rel="noopener">
+          <span class="dl-alt-tag">Portable · x86</span>
+          <span class="dl-alt-name">Windows 32-bit ZIP</span>
+        </a>
+        <a href="https://github.com/OpenScaleOrg/OpenMonitor/releases/latest" class="dl-alt" target="_blank" rel="noopener">
+          <span class="dl-alt-tag">Portable · ARM64EC</span>
+          <span class="dl-alt-name">Windows ARM ZIP</span>
+        </a>
+        <a href="https://github.com/OpenScaleOrg/OpenMonitor/releases/latest" class="dl-alt" target="_blank" rel="noopener">
+          <span class="dl-alt-tag">Microsoft Store</span>
+          <span class="dl-alt-name">OpenScale · OpenMonitor</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="dl-foot">
+      Free and open-source under the
+      <a href="https://github.com/OpenScaleOrg/OpenMonitor/blob/master/LICENSE" target="_blank" rel="noopener">MIT License</a>.
+      No subscription. No account. No telemetry.
+      &nbsp;—&nbsp; <a href="privacy.html">Privacy Policy</a>
+    </div>
+
+    <div class="reqs">
+      <div class="req"><span class="req-pip"></span>Windows 10 version 1809 or later</div>
+      <div class="req"><span class="req-pip"></span>64-bit, 32-bit, or ARM64 processor</div>
+      <div class="req"><span class="req-pip"></span>Administrator privileges for temperature monitoring</div>
+      <div class="req"><span class="req-pip"></span>~15 MB disk space</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-inner">
+    <div>
+      <div class="foot-brand">OpenMonitor</div>
+      <div class="foot-copy">© 2026 OpenScale &nbsp;·&nbsp; MIT License &nbsp;·&nbsp; Built for Windows</div>
+    </div>
+    <ul class="foot-links">
+      <li><a href="https://github.com/OpenScaleOrg/OpenMonitor" target="_blank" rel="noopener">GitHub</a></li>
+      <li><a href="https://github.com/OpenScaleOrg/OpenMonitor/releases" target="_blank" rel="noopener">Releases</a></li>
+      <li><a href="https://github.com/OpenScaleOrg/OpenMonitor/issues" target="_blank" rel="noopener">Report a Bug</a></li>
+      <li><a href="privacy.html">Privacy Policy</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+
+// Nav scroll border
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 10);
+}, {passive: true});
+
+// Widget animation targets
+const T = {
+  up:  {v: 124.7, u: ' MB/s', p: 51},
+  dn:  {v:  89.3, u: ' MB/s', p: 37},
+  cpu: {v:  47,   u: '%',     p: 47},
+  ram: {v:   8.2, u: ' GB',   p: 64},
+  gpu: {v:  67,   u: '%',     p: 67},
+  tmp: {v:  62,   u: ' °C',   p: 56},
+};
+
+const V = {}, B = {};
+['up','dn','cpu','ram','gpu','tmp'].forEach(k => {
+  V[k] = document.getElementById('v-' + k);
+  B[k] = document.getElementById('b-' + k);
+});
+const TU = document.getElementById('t-up'),
+      TD = document.getElementById('t-dn'),
+      TC = document.getElementById('t-cpu'),
+      TR = document.getElementById('t-ram');
+
+function fmt(k, x) {
+  if (k === 'cpu' || k === 'gpu') return Math.round(x) + T[k].u;
+  if (k === 'tmp') return Math.round(x) + T[k].u;
+  return x.toFixed(1) + T[k].u;
+}
+
+function ease(t) { return 1 - Math.pow(1 - t, 3); }
+
+// Count-up on load
+const dur = 1600, t0 = performance.now();
+function tick(now) {
+  const prog = Math.min((now - t0) / dur, 1);
+  const e = ease(prog);
+  Object.keys(T).forEach(k => {
+    const cur = T[k].v * e;
+    V[k].textContent = fmt(k, cur);
+    B[k].style.width = (T[k].p * e) + '%';
+  });
+  TU.textContent = (T.up.v * e).toFixed(1) + ' MB/s';
+  TD.textContent = (T.dn.v * e).toFixed(1) + ' MB/s';
+  TC.textContent = Math.round(T.cpu.v * e) + '%';
+  TR.textContent = (T.ram.v * e).toFixed(1) + ' GB';
+  if (prog < 1) requestAnimationFrame(tick);
+  else setTimeout(live, 900);
+}
+requestAnimationFrame(tick);
+
+// Fluctuate after settle
+const cur = {};
+Object.keys(T).forEach(k => { cur[k] = T[k].v; });
+function live() {
+  Object.keys(T).forEach(k => {
+    const j = (Math.random() - .5) * T[k].v * .16;
+    cur[k] = Math.max(T[k].v * .08, T[k].v + j);
+    V[k].textContent = fmt(k, cur[k]);
+    B[k].style.width = Math.min((cur[k] / T[k].v) * T[k].p, 100) + '%';
+  });
+  TU.textContent = cur.up.toFixed(1) + ' MB/s';
+  TD.textContent = cur.dn.toFixed(1) + ' MB/s';
+  TC.textContent = Math.round(cur.cpu) + '%';
+  TR.textContent = cur.ram.toFixed(1) + ' GB';
+  setTimeout(live, 1100 + Math.random() * 700);
+}
+
+// Fade-up on scroll
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } });
+}, {threshold: .12});
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+})();
+</script>

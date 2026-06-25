@@ -1,0 +1,8 @@
+title: ""
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## OpenMonitor Announcements
+        This category is reserved for maintainer announcements: releases, breaking changes, and project updates.

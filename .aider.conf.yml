@@ -1,0 +1,29 @@
+# Aider configuration for OpenMonitor
+# https://aider.chat/docs/config/aider_conf.html
+
+model: claude-sonnet-4-6
+editor-model: claude-haiku-4-5-20251001
+
+# Files always added to context
+read:
+  - CLAUDE.md
+  - OpenMonitor/stdafx.h
+  - OpenMonitor/CommonData.h
+
+# Auto-lint with clang-format on save
+lint-cmd: clang-format --dry-run --Werror
+
+# Test command
+test-cmd: >
+  msbuild tests\OpenMonitorTests\OpenMonitorTests.vcxproj
+  /p:Configuration=Release /p:Platform=x64 /m /v:minimal
+
+# Encoding: most source files are UTF-8; RC files are UTF-16 LE
+encoding: utf-8
+
+# Respect .gitignore
+gitignore: true
+
+# Don't auto-commit; let developer review
+auto-commits: false
+dirty-commits: false

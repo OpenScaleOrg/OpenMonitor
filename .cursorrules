@@ -1,0 +1,45 @@
+# OpenMonitor — Cursor AI Rules
+
+## Project Context
+
+C++20 / MFC Win32 Windows desktop application. Build system: MSBuild (Visual Studio 2022, toolset v145).
+Displays network speed, CPU/RAM/GPU usage, temperatures in floating window + taskbar widget.
+
+## File Encoding — Critical
+
+- `.rc` resource files: UTF-16 LE — never edit as UTF-8
+- `.cpp` / `.h`: UTF-8 without BOM (MSVC interprets as ANSI)
+  - NEVER embed literal non-ASCII characters — always use `\uXXXX` C++ escape sequences
+  - Example: use `_T("↑")` for ↑, `_T("↓")` for ↓
+
+## Build System
+
+- Always build from `OpenMonitor.sln`, never individual `.vcxproj`
+- PlatformToolset: `v145` (must NOT be changed — v143 lacks MFC headers)
+- Output: `Bin/x64/Release/OpenMonitor.exe` + DLLs
+
+## Code Patterns
+
+- MFC dialogs derive from `CBaseDialog` → `CDialogEx`
+- String resources: `IDS_*` constants, loaded with `CCommon::LoadText()`
+- Settings: `CCommonData` struct, persisted as INI via `CSettingsHelper`
+- Drawing: Direct2D (`D2D1Support`) for skins, GDI for classic rendering
+- No raw `new`/`delete` — use MFC handles and RAII
+
+## MSIX Packaging
+
+- `Package.appxmanifest` controls Store identity
+- Startup task `Executable` = `OpenMonitor\OpenMonitor.exe` (DesktopBridge subfolder prefix)
+- DLLs go in `OpenMonitor\` subfolder inside the package (set via `<Link>` in .wapproj)
+
+## Plugins
+
+- Implement `IPluginItem` from `include/PluginInterface.h`
+- Plugin DLLs placed in `plugins/` folder next to the EXE
+
+## What to Avoid
+
+- Changing PlatformToolset from v145
+- Literal non-ASCII in .cpp/.h source files
+- Building .vcxproj files directly instead of the .sln
+- Putting the signing PFX inside `AppPackages/` (gets cleaned on rebuild)

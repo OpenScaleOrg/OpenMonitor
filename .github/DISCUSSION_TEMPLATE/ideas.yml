@@ -1,0 +1,30 @@
+title: "[Idea] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Share an idea
+        Not sure if something is a bug or a feature request? Use this space to discuss it first.
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What would you like to see in OpenMonitor?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and motivation
+      description: Why would this be useful? What problem does it solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Is there a workaround or existing feature that partially addresses this?

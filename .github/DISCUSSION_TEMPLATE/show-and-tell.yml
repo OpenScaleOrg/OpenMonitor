@@ -1,0 +1,27 @@
+title: "[Show] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Show and Tell
+        Share your OpenMonitor setup, custom skins, or plugins you've built.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What are you sharing?
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details / download link
+      description: How can others get it or recreate it?
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot or recording
+      description: Paste an image or GIF here

@@ -1,0 +1,36 @@
+# Stale bot — auto-close inactive issues and PRs
+# https://github.com/actions/stale
+
+# Issues
+daysUntilStale: 60
+daysUntilClose: 14
+staleLabel: stale
+
+exemptLabels:
+  - pinned
+  - security
+  - confirmed-bug
+  - help-wanted
+  - good-first-issue
+
+staleIssueMessage: >
+  This issue has been inactive for 60 days. It will be closed in 14 days
+  unless there is new activity. If this is still relevant, please leave a
+  comment or remove the `stale` label. Thank you.
+
+closeIssueMessage: >
+  Closing due to inactivity. If this issue is still valid, please open a
+  new issue with up-to-date information and link to this one.
+
+# Pull requests
+stalePrMessage: >
+  This pull request has been inactive for 60 days. It will be closed in
+  14 days unless there is new activity. If you are still working on this,
+  please rebase and push an update. Thank you.
+
+closePrMessage: >
+  Closing due to inactivity. Please reopen or submit a new PR if you
+  would like to continue with this change.
+
+# Don't close PRs that are drafts
+exemptDraftPr: true

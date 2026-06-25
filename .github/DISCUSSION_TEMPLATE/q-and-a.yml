@@ -1,0 +1,22 @@
+title: ""
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Ask a question
+        For bug reports, use [Issues](https://github.com/OpenScaleOrg/OpenMonitor/issues/new/choose) instead.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: Be specific — include your Windows version and OpenMonitor version.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you already tried?
+      description: Have you checked Help.md? Searched existing discussions?

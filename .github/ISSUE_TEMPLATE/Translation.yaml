@@ -1,0 +1,73 @@
+name: "🌐 Translation"
+description: Submit a new translation or correction to an existing language file
+labels: ["translation", "help-wanted"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping translate OpenMonitor! Language files live in `OpenMonitor/language/`.
+        Please read [CONTRIBUTING.md](../CONTRIBUTING.md#adding-a-language) before submitting.
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      description: Which language does this translation cover?
+      options:
+        - New language (not yet in the repo)
+        - English
+        - French
+        - German
+        - Hebrew
+        - Hungarian
+        - Italian
+        - Korean
+        - Polish
+        - Portuguese (Brazilian)
+        - Russian
+        - Spanish
+        - Turkish
+        - Vietnamese
+        - Other (specify below)
+    validations:
+      required: true
+
+  - type: input
+    id: language-name
+    attributes:
+      label: Language name (if "Other" or "New language")
+      placeholder: e.g. Japanese, Dutch, Arabic
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type of change
+      options:
+        - New language file
+        - Correction to existing translation
+        - Missing strings added
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything the reviewer should know — dialect choices, untranslatable terms, etc.
+      placeholder: e.g. "Used formal register throughout. Left APP_NAME as 'OpenMonitor' (not translated)."
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: File saved as **UTF-8 with BOM**
+          required: true
+        - label: Only **values** translated — key names are unchanged
+          required: true
+        - label: "`APP_NAME` value left as `OpenMonitor` (not translated)"
+          required: true
+        - label: Tested by selecting the language in Options → General
+          required: true

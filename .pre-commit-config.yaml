@@ -1,0 +1,64 @@
+# OpenMonitor — pre-commit hooks
+# Install: pip install pre-commit  →  pre-commit install
+# Run manually: pre-commit run --all-files
+# Docs: https://pre-commit.com
+
+repos:
+
+  # ── Generic file hygiene ────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        exclude: '\.(rc|rc2)$'          # UTF-16 files handled separately
+      - id: end-of-file-fixer
+        exclude: '\.(rc|rc2|sln|vcxproj|vcxproj\.filters)$'
+      - id: mixed-line-ending
+        args: [--fix=crlf]
+        exclude: '\.sh$'
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-yaml
+      - id: check-xml
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: [--branch=main, --branch=master]
+
+  # ── C++ formatting ──────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v18.1.8
+    hooks:
+      - id: clang-format
+        types_or: [c++, c]
+        args: [--style=file, --Werror]
+        exclude: |
+          (?x)^(
+            OpenMonitor/tinyxml2/.*|
+            OpenMonitor/res/.*|
+            include/.*
+          )$
+
+  # ── PowerShell linting ──────────────────────────────────────────────────────
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: '\.sh$'
+
+  # ── Markdown linting ────────────────────────────────────────────────────────
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.41.0
+    hooks:
+      - id: markdownlint
+        args: [--config, .markdownlint.json]
+        files: '\.md$'
+
+  # ── Secrets scanning ────────────────────────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
